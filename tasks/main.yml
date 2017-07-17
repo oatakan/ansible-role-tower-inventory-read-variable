@@ -1,0 +1,39 @@
+- name: get inventory list
+  uri:
+    url: "https://{{ tower_hostname }}/api/v1/inventories"
+    method: GET
+    user: "{{ tower_username }}"
+    password: "{{ tower_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+  register: tower_inventories
+  delegate_to: 127.0.0.1
+
+- name: set inventory id
+  set_fact:
+    inventory_id: "{{ tower_inventories.json.results | selectattr('name', 'equalto', inventory_name) | map(attribute='id') | join }}"
+
+- name: debug inventory id
+  debug:
+    var: inventory_id
+    verbosity: 2
+
+- name: get inventory variables
+  uri:
+    url: "https://{{ tower_hostname }}/api/v1/inventories/{{ inventory_id }}/variable_data/"
+    method: GET
+    user: "{{ tower_username }}"
+    password: "{{ tower_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+  register: get_inventory_variable
+  delegate_to: 127.0.0.1
+
+- name: set variables
+  set_fact:
+    inventory_variables: "{{ get_inventory_variable.json }}"
+
+- name: debug inventory variables
+  debug:
+    var: inventory_variables
+    verbosity: 2
